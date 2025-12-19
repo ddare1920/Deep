@@ -1,6 +1,8 @@
-import React, { useRef, useEffect } from 'react';
-import { Send, Bot, User, Cpu, AlertTriangle, CheckCircle, PenTool, Wrench } from 'lucide-react';
+
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, Bot, User, Cpu, AlertTriangle, CheckCircle, PenTool, Wrench, Hash, X } from 'lucide-react';
 import { Message, Sender } from '../types';
+import { ERROR_CODE_PROMPT_TEMPLATE } from '../constants';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -9,7 +11,8 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, isStreaming }) => {
-  const [input, setInput] = React.useState('');
+  const [input, setInput] = useState('');
+  const [isErrorCodeMode, setIsErrorCodeMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -23,22 +26,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !isStreaming) {
-      onSendMessage(input);
+      if (isErrorCodeMode) {
+        onSendMessage(ERROR_CODE_PROMPT_TEMPLATE(input.trim()));
+        setIsErrorCodeMode(false);
+      } else {
+        onSendMessage(input);
+      }
       setInput('');
     }
   };
 
+  const toggleErrorCodeMode = () => {
+    setIsErrorCodeMode(!isErrorCodeMode);
+    setInput('');
+  };
+
   // Basic Markdown Renderer
   const renderMarkdown = (text: string) => {
-    // Split by newlines to handle blocks
     const lines = text.split('\n');
-    let inList = false;
-
     return lines.map((line, idx) => {
       // Headers
       if (line.startsWith('### ')) return <h3 key={idx} className="text-lg font-bold text-brand-blue mt-4 mb-2">{line.replace('### ', '')}</h3>;
       if (line.startsWith('**') && line.includes(':**')) {
-        // Key-Value style bolding often used in my system prompt
         const parts = line.split(':**');
         return <div key={idx} className="mt-2 mb-1"><span className="font-bold text-safety-yellow">{parts[0].replace('**', '')}:</span>{parts[1]}</div>
       }
@@ -52,13 +61,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
          return <div key={idx} className="ml-4 flex gap-2 mt-1"><span className="font-mono text-industrial-400 select-none">{line.match(/^\d+\./)?.[0]}</span><span>{line.replace(/^\d+\.\s/, '')}</span></div>;
       }
 
-      // Code blocks (simple detection)
-      if (line.startsWith('```')) return null; // Skip code fences for now or implement block logic
-      
-      // Empty lines
+      if (line.startsWith('```')) return null;
       if (line.trim() === '') return <div key={idx} className="h-2"></div>;
 
-      // Regular text with bold support
       const boldParts = line.split(/(\*\*.*?\*\*)/g);
       return (
         <p key={idx} className="text-industrial-100 leading-relaxed min-h-[1.2em]">
@@ -134,30 +139,61 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
 
       {/* Input Area */}
       <div className="bg-industrial-800 border-t border-industrial-700 p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3">
+          
           <form onSubmit={handleSubmit} className="relative flex items-center gap-2">
-            <div className="absolute left-4 text-industrial-500">
-               <PenTool size={18} />
-            </div>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={isStreaming ? "Analyzing manual..." : "Ask troubleshooting question or request a summary..."}
-              disabled={isStreaming}
-              className="w-full bg-industrial-900 text-white placeholder-industrial-500 border border-industrial-600 rounded-lg py-3 pl-12 pr-12 focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-all font-mono text-sm"
-            />
             <button
-              type="submit"
-              disabled={!input.trim() || isStreaming}
-              className="absolute right-2 p-2 bg-brand-blue text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-brand-blue transition-colors"
+              type="button"
+              onClick={toggleErrorCodeMode}
+              title="Lookup Error Code"
+              className={`flex-shrink-0 p-3 rounded-lg border transition-all flex items-center gap-2 font-mono text-xs uppercase font-bold
+                ${isErrorCodeMode 
+                  ? 'bg-safety-red text-white border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)] bg-red-600' 
+                  : 'bg-industrial-900 text-industrial-400 border-industrial-600 hover:border-red-500 hover:text-red-400'
+                }`}
             >
-              <Send size={18} />
+              {isErrorCodeMode ? <X size={18} /> : <Hash size={18} />}
+              <span className="hidden sm:inline">{isErrorCodeMode ? 'Cancel' : 'Fault Code'}</span>
             </button>
+
+            <div className="relative flex-1">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-industrial-500">
+                {isErrorCodeMode ? <AlertTriangle size={18} className="text-safety-yellow" /> : <PenTool size={18} />}
+              </div>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={
+                  isErrorCodeMode 
+                    ? "Enter Fault Code (e.g. E102, F-44)..." 
+                    : "Ask maintenance question..."
+                }
+                disabled={isStreaming}
+                className={`w-full bg-industrial-900 text-white placeholder-industrial-500 border rounded-lg py-3 pl-12 pr-12 focus:outline-none transition-all font-mono text-sm
+                  ${isErrorCodeMode 
+                    ? 'border-safety-orange ring-1 ring-safety-orange/30' 
+                    : 'border-industrial-600 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue'
+                  }`}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isStreaming}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md transition-colors
+                  ${isErrorCodeMode 
+                    ? 'bg-safety-orange hover:bg-orange-600 text-white' 
+                    : 'bg-brand-blue hover:bg-blue-600 text-white disabled:opacity-50'
+                  }`}
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </form>
-          <div className="text-center mt-2">
-            <p className="text-[10px] text-industrial-500 uppercase tracking-widest">
-              Always follow Lockout/Tagout procedures before maintenance
+          
+          <div className="text-center">
+            <p className="text-[10px] text-industrial-500 uppercase tracking-widest flex items-center justify-center gap-2">
+              <ShieldAlert size={10} className="text-safety-yellow" />
+              Perform Lockout/Tagout before troubleshooting internal faults
             </p>
           </div>
         </div>
@@ -165,3 +201,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMe
     </div>
   );
 };
+
+// Add missing icon for the footer
+const ShieldAlert = ({ size, className }: { size: number, className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+    <path d="M12 8v4" />
+    <path d="M12 16h.01" />
+  </svg>
+);

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Message, Sender, UploadedFile, MaintenanceItem } from './types';
 import { streamResponse, extractMaintenanceData } from './services/geminiService';
@@ -6,7 +7,7 @@ import { FileUpload } from './components/FileUpload';
 import { ChatInterface } from './components/ChatInterface';
 import { AnalysisView } from './components/AnalysisView';
 import { 
-    BookOpen, 
+    Star, 
     MessageSquare, 
     LayoutDashboard, 
     FileText, 
@@ -113,10 +114,10 @@ export default function App() {
         <header className="p-6 border-b border-industrial-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
                 <div className="bg-brand-blue p-2 rounded-lg">
-                    <BookOpen className="text-white" size={24} />
+                    <Star className="text-white fill-current" size={24} />
                 </div>
                 <div>
-                    <h1 className="font-bold text-xl tracking-tight">Manual AI</h1>
+                    <h1 className="font-bold text-xl tracking-tight">Maintenance assistant</h1>
                     <p className="text-xs text-industrial-500 font-mono">INDUSTRIAL INTELLIGENCE AGENT</p>
                 </div>
             </div>
@@ -134,10 +135,10 @@ export default function App() {
       <aside className="w-64 bg-industrial-950 border-r border-industrial-800 flex flex-col hidden md:flex">
         <div className="p-6 border-b border-industrial-800 flex items-center gap-3">
              <div className="bg-brand-blue p-2 rounded-lg">
-                <BookOpen className="text-white" size={20} />
+                <Star className="text-white fill-current" size={20} />
              </div>
              <div>
-                <h1 className="font-bold text-lg tracking-tight">Manual AI</h1>
+                <h1 className="font-bold text-lg tracking-tight leading-tight">Maintenance assistant</h1>
                 <p className="text-[10px] text-industrial-500 font-mono">V1.0.4 | ONLINE</p>
              </div>
         </div>
@@ -195,7 +196,10 @@ export default function App() {
       <main className="flex-1 flex flex-col h-full relative">
          {/* Mobile Header */}
          <header className="md:hidden p-4 border-b border-industrial-800 flex justify-between items-center bg-industrial-950">
-             <h1 className="font-bold">Manual AI</h1>
+             <div className="flex items-center gap-2">
+                 <Star className="text-brand-blue fill-current" size={20} />
+                 <h1 className="font-bold">Maintenance assistant</h1>
+             </div>
              <div className="flex gap-2">
                  <button onClick={() => setActiveTab('chat')} className={`p-2 rounded ${activeTab === 'chat' ? 'bg-industrial-800' : ''}`}><MessageSquare size={20}/></button>
                  <button onClick={() => setActiveTab('analysis')} className={`p-2 rounded ${activeTab === 'analysis' ? 'bg-industrial-800' : ''}`}><LayoutDashboard size={20}/></button>

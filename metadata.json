@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Industrial Manual AI",
+  "name": "Maintenance assistant",
   "description": "An intelligent agent for industrial machine manuals. Upload PDFs or images to get instant troubleshooting, maintenance schedules, and engineering guidance.",
   "requestFramePermissions": []
 }
